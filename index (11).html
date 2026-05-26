@@ -1,0 +1,1353 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MedStudy — Atlas Neuro & Histologi</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        bg: '#030C14',
+        surface: '#07101C',
+        surface2: '#0A1929',
+        cyan: '#06B6D4',
+        'cyan-dim': '#3A5A73',
+        'cyan-bright': '#7BA3C0',
+        text: '#E0F2FE',
+        'text-dim': '#7BA3C0',
+        success: '#10B981',
+        warning: '#F59E0B',
+        danger: '#EF4444',
+      },
+      fontFamily: {
+        sans: ['Inter', 'sans-serif'],
+        mono: ['JetBrains Mono', 'monospace'],
+        display: ['Playfair Display', 'serif'],
+      }
+    }
+  }
+}
+</script>
+<style>
+  * { border-color: rgba(6,182,212,0.15); }
+  body {
+    background: #030C14;
+    color: #E0F2FE;
+    font-family: 'Inter', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  .glass {
+    background: rgba(6,182,212,0.08);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(6,182,212,0.15);
+    box-shadow: 0 4px 24px rgba(0,0,0,0.4), 0 0 1px rgba(6,182,212,0.1);
+  }
+  .glass:hover {
+    background: rgba(6,182,212,0.14);
+    border-color: rgba(6,182,212,0.3);
+    box-shadow: 0 8px 40px rgba(0,0,0,0.5), 0 0 1px rgba(6,182,212,0.2);
+  }
+  .glass-strong {
+    background: rgba(7,16,28,0.9);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(6,182,212,0.2);
+  }
+  .nav-glow {
+    box-shadow: 0 2px 8px rgba(6,182,212,0.3);
+  }
+  .shimmer::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.04) 50%, transparent 60%);
+    background-size: 200% 100%;
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+  }
+  .shimmer:hover::after {
+    opacity: 1;
+    animation: shimmerMove 0.8s ease-out;
+  }
+  @keyframes shimmerMove {
+    0% { background-position: 100% 0; }
+    100% { background-position: -100% 0; }
+  }
+  .progress-bar {
+    background: linear-gradient(90deg, #06B6D4, #22d3ee);
+    box-shadow: 0 0 8px rgba(6,182,212,0.4);
+  }
+  .scrollbar-thin::-webkit-scrollbar { width: 6px; }
+  .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
+  .scrollbar-thin::-webkit-scrollbar-thumb { background: rgba(6,182,212,0.3); border-radius: 3px; }
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover { background: rgba(6,182,212,0.5); }
+  .flip-card { perspective: 1000px; }
+  .flip-card-inner {
+    transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    transform-style: preserve-3d;
+  }
+  .flip-card.flipped .flip-card-inner { transform: rotateY(180deg); }
+  .flip-card-front, .flip-card-back {
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+  }
+  .flip-card-back { transform: rotateY(180deg); }
+  .page { display: none; animation: fadeIn 0.25s ease-out; }
+  .page.active { display: block; }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, #06B6D4, #0891b2);
+    color: #030C14;
+    font-weight: 600;
+    transition: all 0.2s;
+  }
+  .btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 20px rgba(6,182,212,0.4);
+  }
+  .btn-primary:active { transform: scale(0.98); }
+  .option-btn {
+    transition: all 0.15s;
+    border: 1px solid rgba(6,182,212,0.2);
+  }
+  .option-btn:hover {
+    border-color: rgba(6,182,212,0.5);
+    background: rgba(6,182,212,0.1);
+  }
+  .option-btn.correct {
+    border-color: #10B981;
+    background: rgba(16,185,129,0.15);
+    color: #10B981;
+  }
+  .option-btn.wrong {
+    border-color: #EF4444;
+    background: rgba(239,68,68,0.15);
+    color: #EF4444;
+  }
+  .option-btn.disabled { pointer-events: none; opacity: 0.7; }
+  .streak-flame {
+    animation: flame 1.5s ease-in-out infinite;
+  }
+  @keyframes flame {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.15); }
+  }
+  .timer-pulse {
+    animation: timerPulse 1s ease-in-out infinite;
+  }
+  @keyframes timerPulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+  }
+  input::placeholder, textarea::placeholder {
+    color: #3A5A73;
+  }
+  .tab-active {
+    color: #E0F2FE;
+    border-bottom: 2px solid #06B6D4;
+    box-shadow: 0 2px 8px rgba(6,182,212,0.3);
+  }
+  .tab-inactive {
+    color: #7BA3C0;
+    border-bottom: 2px solid transparent;
+  }
+  .tab-inactive:hover {
+    color: #E0F2FE;
+    border-bottom-color: rgba(6,182,212,0.3);
+  }
+</style>
+</head>
+<body class="min-h-screen">
+
+<!-- Top Navigation -->
+<nav class="fixed top-0 left-0 right-0 z-50 h-16 flex items-center justify-between px-6 lg:px-12" style="background:rgba(3,12,20,0.85); backdrop-filter:blur(16px); border-bottom:1px solid rgba(6,182,212,0.15);">
+  <button onclick="navigate('dashboard')" class="flex flex-col items-start text-left">
+    <span class="text-text font-semibold text-lg leading-tight tracking-tight">MedStudy</span>
+    <span class="text-cyan-dim text-[11px] font-medium tracking-[0.08em]">FKIK UNJA</span>
+  </button>
+  <div class="hidden md:flex items-center gap-6">
+    <button onclick="navigate('dashboard')" id="nav-dashboard" class="relative text-[13px] font-medium py-2 transition-colors duration-200 text-text">
+      Beranda<span class="nav-underline absolute bottom-0 left-0 right-0 h-0.5 rounded-full bg-cyan nav-glow"></span>
+    </button>
+    <button onclick="navigate('materials')" id="nav-materials" class="relative text-[13px] font-medium py-2 transition-colors duration-200 text-text-dim hover:text-text">
+      Materi<span class="nav-underline absolute bottom-0 left-0 right-0 h-0.5 rounded-full bg-cyan opacity-0 hover:opacity-100 transition-opacity"></span>
+    </button>
+    <button onclick="navigate('flashcards')" id="nav-flashcards" class="relative text-[13px] font-medium py-2 transition-colors duration-200 text-text-dim hover:text-text">
+      Flashcard<span class="nav-underline absolute bottom-0 left-0 right-0 h-0.5 rounded-full bg-cyan opacity-0 hover:opacity-100 transition-opacity"></span>
+    </button>
+    <button onclick="navigate('quiz')" id="nav-quiz" class="relative text-[13px] font-medium py-2 transition-colors duration-200 text-text-dim hover:text-text">
+      Kuis<span class="nav-underline absolute bottom-0 left-0 right-0 h-0.5 rounded-full bg-cyan opacity-0 hover:opacity-100 transition-opacity"></span>
+    </button>
+    <button onclick="navigate('exam')" id="nav-exam" class="relative text-[13px] font-medium py-2 transition-colors duration-200 text-text-dim hover:text-text">
+      Ujian<span class="nav-underline absolute bottom-0 left-0 right-0 h-0.5 rounded-full bg-cyan opacity-0 hover:opacity-100 transition-opacity"></span>
+    </button>
+  </div>
+  <div class="flex items-center gap-2">
+    <button onclick="navigate('settings')" class="w-9 h-9 rounded-full flex items-center justify-center transition-all duration-200 bg-cyan/10 border border-cyan/20 hover:border-cyan">
+      <svg class="w-[18px] h-[18px] text-text-dim hover:text-cyan transition-colors" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 1v6m0 6v6m4.22-10.22l4.24-4.24M6.34 17.66l-4.24 4.24M23 12h-6m-6 0H1m20.24 4.24l-4.24-4.24M6.34 6.34L2.1 2.1"/></svg>
+    </button>
+    <button onclick="navigate('help')" class="w-9 h-9 rounded-full flex items-center justify-center transition-all duration-200 bg-cyan/10 border border-cyan/20 hover:border-cyan">
+      <svg class="w-[18px] h-[18px] text-text-dim hover:text-cyan transition-colors" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
+    </button>
+  </div>
+</nav>
+
+<!-- Mobile Bottom Nav -->
+<div class="md:hidden fixed bottom-0 left-0 right-0 z-50 h-14 flex items-center justify-around px-2" style="background:rgba(3,12,20,0.95); backdrop-filter:blur(16px); border-top:1px solid rgba(6,182,212,0.15);">
+  <button onclick="navigate('dashboard')" class="flex flex-col items-center gap-0.5 text-[10px] text-text-dim hover:text-cyan transition-colors">
+    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    Beranda
+  </button>
+  <button onclick="navigate('materials')" class="flex flex-col items-center gap-0.5 text-[10px] text-text-dim hover:text-cyan transition-colors">
+    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+    Materi
+  </button>
+  <button onclick="navigate('flashcards')" class="flex flex-col items-center gap-0.5 text-[10px] text-text-dim hover:text-cyan transition-colors">
+    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+    Flashcard
+  </button>
+  <button onclick="navigate('quiz')" class="flex flex-col items-center gap-0.5 text-[10px] text-text-dim hover:text-cyan transition-colors">
+    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+    Kuis
+  </button>
+  <button onclick="navigate('exam')" class="flex flex-col items-center gap-0.5 text-[10px] text-text-dim hover:text-cyan transition-colors">
+    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+    Ujian
+  </button>
+</div>
+
+<main class="pt-16 pb-16 md:pb-0 min-h-screen">
+
+<!-- DASHBOARD -->
+<section id="page-dashboard" class="page active px-6 lg:px-12 py-8 max-w-7xl mx-auto">
+  <div class="mb-8">
+    <h1 class="font-display text-3xl md:text-4xl text-text mb-2">Selamat Datang Kembali</h1>
+    <p class="text-text-dim text-sm">Semester 2 • FKIK UNJA • Atlas Neuroanatomi & Histologi</p>
+  </div>
+
+  <!-- Stats Row -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+    <div class="glass rounded-xl p-5 relative overflow-hidden shimmer">
+      <div class="flex items-center gap-3 mb-2">
+        <div class="w-8 h-8 rounded-lg bg-cyan/20 flex items-center justify-center">
+          <svg class="w-4 h-4 text-cyan" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2q1 4 4 6.5t3 5.5a1 1 0 0 1-14 0 5 5 0 0 1 1-3 1 1 0 0 0 5 0c0-2-1.5-3-1.5-5q0-2 2.5-4"/></svg>
+        </div>
+        <span class="text-text-dim text-xs font-medium">Streak Belajar</span>
+      </div>
+      <div class="text-2xl font-bold text-text" id="dash-streak">5 hari</div>
+    </div>
+    <div class="glass rounded-xl p-5 relative overflow-hidden shimmer">
+      <div class="flex items-center gap-3 mb-2">
+        <div class="w-8 h-8 rounded-lg bg-success/20 flex items-center justify-center">
+          <svg class="w-4 h-4 text-success" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
+        </div>
+        <span class="text-text-dim text-xs font-medium">Jawaban Benar</span>
+      </div>
+      <div class="text-2xl font-bold text-text" id="dash-correct">24 soal</div>
+    </div>
+    <div class="glass rounded-xl p-5 relative overflow-hidden shimmer">
+      <div class="flex items-center gap-3 mb-2">
+        <div class="w-8 h-8 rounded-lg bg-warning/20 flex items-center justify-center">
+          <svg class="w-4 h-4 text-warning" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </div>
+        <span class="text-text-dim text-xs font-medium">Waktu Fokus</span>
+      </div>
+      <div class="text-2xl font-bold text-text" id="dash-focus">150 menit</div>
+    </div>
+    <div class="glass rounded-xl p-5 relative overflow-hidden shimmer cursor-pointer" onclick="navigate('materials')">
+      <div class="flex items-center gap-3 mb-2">
+        <div class="w-8 h-8 rounded-lg bg-cyan/20 flex items-center justify-center">
+          <svg class="w-4 h-4 text-cyan" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+        </div>
+        <span class="text-text-dim text-xs font-medium">Progress Materi</span>
+      </div>
+      <div class="text-2xl font-bold text-text" id="dash-progress">2/8</div>
+    </div>
+  </div>
+
+  <div class="grid lg:grid-cols-3 gap-6">
+    <!-- Quick Actions -->
+    <div class="lg:col-span-2 space-y-6">
+      <div class="glass rounded-xl p-6">
+        <h2 class="text-lg font-semibold text-text mb-4 flex items-center gap-2">
+          <svg class="w-5 h-5 text-cyan" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          Aksi Cepat
+        </h2>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <button onclick="navigate('materials')" class="glass rounded-lg p-4 text-center hover:border-cyan/50 transition-all group">
+            <div class="w-10 h-10 rounded-lg bg-cyan/20 flex items-center justify-center mx-auto mb-2 group-hover:scale-110 transition-transform">
+              <svg class="w-5 h-5 text-cyan" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            </div>
+            <span class="text-xs text-text-dim">Baca Materi</span>
+          </button>
+          <button onclick="navigate('quiz')" class="glass rounded-lg p-4 text-center hover:border-cyan/50 transition-all group">
+            <div class="w-10 h-10 rounded-lg bg-success/20 flex items-center justify-center mx-auto mb-2 group-hover:scale-110 transition-transform">
+              <svg class="w-5 h-5 text-success" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+            </div>
+            <span class="text-xs text-text-dim">Kerjakan Kuis</span>
+          </button>
+          <button onclick="navigate('flashcards')" class="glass rounded-lg p-4 text-center hover:border-cyan/50 transition-all group">
+            <div class="w-10 h-10 rounded-lg bg-warning/20 flex items-center justify-center mx-auto mb-2 group-hover:scale-110 transition-transform">
+              <svg class="w-5 h-5 text-warning" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+            </div>
+            <span class="text-xs text-text-dim">Flashcard</span>
+          </button>
+          <button onclick="startPomodoro()" class="glass rounded-lg p-4 text-center hover:border-cyan/50 transition-all group">
+            <div class="w-10 h-10 rounded-lg bg-danger/20 flex items-center justify-center mx-auto mb-2 group-hover:scale-110 transition-transform">
+              <svg class="w-5 h-5 text-danger" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            </div>
+            <span class="text-xs text-text-dim">Pomodoro</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Recent Activity -->
+      <div class="glass rounded-xl p-6">
+        <h2 class="text-lg font-semibold text-text mb-4 flex items-center gap-2">
+          <svg class="w-5 h-5 text-cyan" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          Aktivitas Terbaru
+        </h2>
+        <div id="activity-list" class="space-y-3">
+          <!-- Filled by JS -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="space-y-6">
+      <!-- Pomodoro Widget -->
+      <div class="glass rounded-xl p-6 text-center">
+        <h3 class="text-sm font-medium text-text-dim mb-3">Pomodoro Timer</h3>
+        <div class="text-4xl font-mono font-bold text-cyan mb-4 timer-pulse" id="pomodoro-display">25:00</div>
+        <div class="flex gap-2 justify-center">
+          <button onclick="togglePomodoro()" id="pomodoro-btn" class="btn-primary px-4 py-2 rounded-lg text-sm">Mulai</button>
+          <button onclick="resetPomodoro()" class="px-4 py-2 rounded-lg text-sm border border-cyan/30 text-text-dim hover:bg-cyan/10 transition-colors">Reset</button>
+        </div>
+      </div>
+
+      <!-- Material Progress -->
+      <div class="glass rounded-xl p-6">
+        <h3 class="text-sm font-medium text-text-dim mb-4">Progress Materi</h3>
+        <div id="progress-list" class="space-y-3">
+          <!-- Filled by JS -->
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- MATERIALS -->
+<section id="page-materials" class="page px-6 lg:px-12 py-8 max-w-7xl mx-auto">
+  <div class="mb-6">
+    <h1 class="font-display text-3xl text-text mb-2">Daftar Materi</h1>
+    <p class="text-text-dim text-sm">Pilih materi untuk memulai pembelajaran</p>
+  </div>
+  <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4" id="materials-grid">
+    <!-- Filled by JS -->
+  </div>
+</section>
+
+<!-- MATERIAL DETAIL -->
+<section id="page-material-detail" class="page px-6 lg:px-12 py-8 max-w-5xl mx-auto">
+  <button onclick="navigate('materials')" class="flex items-center gap-2 text-text-dim hover:text-cyan transition-colors mb-6 text-sm">
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 12H5m7 7l-7-7 7-7"/></svg>
+    Kembali ke Materi
+  </button>
+  <div id="material-content">
+    <!-- Filled by JS -->
+  </div>
+  <!-- Notes Section -->
+  <div class="glass rounded-xl p-6 mt-6">
+    <h3 class="text-lg font-semibold text-text mb-3 flex items-center gap-2">
+      <svg class="w-5 h-5 text-cyan" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+      Catatan Pribadi
+    </h3>
+    <textarea id="note-textarea" class="w-full h-32 bg-surface rounded-lg border border-cyan/20 p-4 text-sm text-text resize-none focus:border-cyan focus:outline-none transition-colors" placeholder="Tulis catatanmu di sini..."></textarea>
+    <div class="flex justify-end mt-3">
+      <button onclick="saveNote()" class="btn-primary px-5 py-2 rounded-lg text-sm">Simpan Catatan</button>
+    </div>
+  </div>
+</section>
+
+<!-- QUIZ LIST -->
+<section id="page-quiz" class="page px-6 lg:px-12 py-8 max-w-5xl mx-auto">
+  <div class="mb-6">
+    <h1 class="font-display text-3xl text-text mb-2">Kuis Interaktif</h1>
+    <p class="text-text-dim text-sm">Uji pemahamanmu dengan kuis berikut</p>
+  </div>
+  <div class="grid md:grid-cols-2 gap-4" id="quiz-list">
+    <!-- Filled by JS -->
+  </div>
+</section>
+
+<!-- QUIZ RUN -->
+<section id="page-quiz-run" class="page px-6 lg:px-12 py-8 max-w-3xl mx-auto">
+  <div class="glass rounded-xl p-6 md:p-8">
+    <div class="flex items-center justify-between mb-6">
+      <button onclick="navigate('quiz')" class="flex items-center gap-2 text-text-dim hover:text-cyan transition-colors text-sm">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 12H5m7 7l-7-7 7-7"/></svg>
+        Kembali
+      </button>
+      <div class="text-sm text-text-dim">Soal <span id="quiz-current" class="text-cyan font-semibold">1</span> / <span id="quiz-total">10</span></div>
+    </div>
+    <div class="w-full h-1 bg-surface rounded-full mb-6 overflow-hidden">
+      <div id="quiz-progress-bar" class="h-full progress-bar rounded-full transition-all duration-300" style="width: 0%"></div>
+    </div>
+    <div id="quiz-question-container">
+      <!-- Filled by JS -->
+    </div>
+  </div>
+</section>
+
+<!-- QUIZ RESULT -->
+<section id="page-quiz-result" class="page px-6 lg:px-12 py-8 max-w-2xl mx-auto text-center">
+  <div class="glass rounded-xl p-8 md:p-12">
+    <div class="w-20 h-20 rounded-full bg-cyan/20 flex items-center justify-center mx-auto mb-6">
+      <svg class="w-10 h-10 text-cyan" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+    </div>
+    <h2 class="font-display text-3xl text-text mb-2">Kuis Selesai!</h2>
+    <p class="text-text-dim mb-6">Berikut hasil pengerjaan kuismu</p>
+    <div class="text-5xl font-bold text-cyan mb-2" id="result-score">0/0</div>
+    <div class="text-lg text-text-dim mb-8" id="result-percentage">0% benar</div>
+    <div class="flex gap-3 justify-center">
+      <button onclick="navigate('quiz')" class="px-6 py-2.5 rounded-lg border border-cyan/30 text-text hover:bg-cyan/10 transition-colors">Kuis Lain</button>
+      <button onclick="retryQuiz()" class="btn-primary px-6 py-2.5 rounded-lg">Ulangi Kuis</button>
+    </div>
+  </div>
+</section>
+
+<!-- EXAM -->
+<section id="page-exam" class="page px-6 lg:px-12 py-8 max-w-5xl mx-auto">
+  <div class="mb-6">
+    <h1 class="font-display text-3xl text-text mb-2">Simulasi Ujian</h1>
+    <p class="text-text-dim text-sm">Latihan ujian dengan timer dan penilaian otomatis</p>
+  </div>
+  <div class="grid md:grid-cols-2 gap-4" id="exam-list">
+    <!-- Filled by JS -->
+  </div>
+</section>
+
+<!-- EXAM RUN -->
+<section id="page-exam-run" class="page px-6 lg:px-12 py-8 max-w-4xl mx-auto">
+  <div class="glass rounded-xl p-6 md:p-8">
+    <div class="flex items-center justify-between mb-6 flex-wrap gap-3">
+      <button onclick="navigate('exam')" class="flex items-center gap-2 text-text-dim hover:text-cyan transition-colors text-sm">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 12H5m7 7l-7-7 7-7"/></svg>
+        Kembali
+      </button>
+      <div class="flex items-center gap-4">
+        <div class="text-sm text-text-dim">Sisa Waktu: <span id="exam-timer" class="text-cyan font-mono font-semibold">60:00</span></div>
+        <div class="text-sm text-text-dim">Soal <span id="exam-current" class="text-cyan font-semibold">1</span> / <span id="exam-total">30</span></div>
+      </div>
+    </div>
+    <div class="w-full h-1 bg-surface rounded-full mb-6 overflow-hidden">
+      <div id="exam-progress-bar" class="h-full progress-bar rounded-full transition-all duration-300" style="width: 0%"></div>
+    </div>
+    <div id="exam-question-container">
+      <!-- Filled by JS -->
+    </div>
+  </div>
+</section>
+
+<!-- EXAM RESULT -->
+<section id="page-exam-result" class="page px-6 lg:px-12 py-8 max-w-2xl mx-auto text-center">
+  <div class="glass rounded-xl p-8 md:p-12">
+    <div class="w-20 h-20 rounded-full bg-cyan/20 flex items-center justify-center mx-auto mb-6">
+      <svg class="w-10 h-10 text-cyan" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+    </div>
+    <h2 class="font-display text-3xl text-text mb-2">Ujian Selesai!</h2>
+    <p class="text-text-dim mb-6">Hasil simulasi ujianmu</p>
+    <div class="text-5xl font-bold text-cyan mb-2" id="exam-result-score">0/0</div>
+    <div class="text-lg text-text-dim mb-2" id="exam-result-percentage">0% benar</div>
+    <div class="text-sm text-text-dim mb-8" id="exam-result-time">Waktu: 0 menit</div>
+    <div class="flex gap-3 justify-center">
+      <button onclick="navigate('exam')" class="px-6 py-2.5 rounded-lg border border-cyan/30 text-text hover:bg-cyan/10 transition-colors">Ujian Lain</button>
+      <button onclick="retryExam()" class="btn-primary px-6 py-2.5 rounded-lg">Ulangi Ujian</button>
+    </div>
+  </div>
+</section>
+
+<!-- FLASHCARDS -->
+<section id="page-flashcards" class="page px-6 lg:px-12 py-8 max-w-5xl mx-auto">
+  <div class="mb-6">
+    <h1 class="font-display text-3xl text-text mb-2">Flashcard</h1>
+    <p class="text-text-dim text-sm">Pelajari konsep penting dengan kartu interaktif</p>
+  </div>
+  <div class="mb-6 flex gap-2 flex-wrap" id="flashcard-filters">
+    <button onclick="filterFlashcards('all')" class="px-4 py-1.5 rounded-full text-sm border border-cyan/30 bg-cyan/20 text-text">Semua</button>
+    <button onclick="filterFlashcards('neuro')" class="px-4 py-1.5 rounded-full text-sm border border-cyan/20 text-text-dim hover:bg-cyan/10 transition-colors">Neuroanatomi</button>
+    <button onclick="filterFlashcards('histologi')" class="px-4 py-1.5 rounded-full text-sm border border-cyan/20 text-text-dim hover:bg-cyan/10 transition-colors">Histologi</button>
+  </div>
+  <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4" id="flashcards-grid">
+    <!-- Filled by JS -->
+  </div>
+</section>
+
+<!-- SETTINGS -->
+<section id="page-settings" class="page px-6 lg:px-12 py-8 max-w-2xl mx-auto">
+  <div class="mb-6">
+    <h1 class="font-display text-3xl text-text mb-2">Pengaturan</h1>
+    <p class="text-text-dim text-sm">Kelola data dan preferensi aplikasi</p>
+  </div>
+  <div class="glass rounded-xl p-6 space-y-6">
+    <div class="flex items-center justify-between">
+      <div>
+        <h3 class="text-text font-medium">Reset Data</h3>
+        <p class="text-text-dim text-sm">Hapus semua progress, catatan, dan riwayat</p>
+      </div>
+      <button onclick="resetData()" class="px-4 py-2 rounded-lg border border-danger/40 text-danger hover:bg-danger/10 transition-colors text-sm">Reset</button>
+    </div>
+    <div class="h-px bg-cyan/10"></div>
+    <div class="flex items-center justify-between">
+      <div>
+        <h3 class="text-text font-medium">Tentang MedStudy</h3>
+        <p class="text-text-dim text-sm">Versi 1.0 • FKIK UNJA</p>
+      </div>
+    </div>
+    <div class="h-px bg-cyan/10"></div>
+    <div>
+      <h3 class="text-text font-medium mb-2">Statistik Data</h3>
+      <div class="grid grid-cols-2 gap-3 text-sm">
+        <div class="glass rounded-lg p-3">
+          <div class="text-text-dim text-xs">Total Materi</div>
+          <div class="text-text font-semibold">8</div>
+        </div>
+        <div class="glass rounded-lg p-3">
+          <div class="text-text-dim text-xs">Total Kuis</div>
+          <div class="text-text font-semibold">4</div>
+        </div>
+        <div class="glass rounded-lg p-3">
+          <div class="text-text-dim text-xs">Total Flashcard</div>
+          <div class="text-text font-semibold" id="settings-flashcount">0</div>
+        </div>
+        <div class="glass rounded-lg p-3">
+          <div class="text-text-dim text-xs">Total Soal Ujian</div>
+          <div class="text-text font-semibold">60</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HELP -->
+<section id="page-help" class="page px-6 lg:px-12 py-8 max-w-3xl mx-auto">
+  <div class="mb-6">
+    <h1 class="font-display text-3xl text-text mb-2">Panduan Pengguna</h1>
+    <p class="text-text-dim text-sm">Cara menggunakan MedStudy</p>
+  </div>
+  <div class="glass rounded-xl p-6 space-y-4">
+    <div>
+      <h3 class="text-text font-medium mb-1">📖 Materi</h3>
+      <p class="text-text-dim text-sm">Baca materi pembelajaran lengkap dengan gambaran konsep. Setiap materi memiliki catatan pribadi yang tersimpan otomatis.</p>
+    </div>
+    <div class="h-px bg-cyan/10"></div>
+    <div>
+      <h3 class="text-text font-medium mb-1">📝 Kuis</h3>
+      <p class="text-text-dim text-sm">Uji pemahaman dengan soal pilihan ganda. Skor akan tersimpan dan ditampilkan di dashboard.</p>
+    </div>
+    <div class="h-px bg-cyan/10"></div>
+    <div>
+      <h3 class="text-text font-medium mb-1">🎴 Flashcard</h3>
+      <p class="text-text-dim text-sm">Klik kartu untuk membaliknya. Gunakan untuk menghafal definisi dan konsep penting.</p>
+    </div>
+    <div class="h-px bg-cyan/10"></div>
+    <div>
+      <h3 class="text-text font-medium mb-1">⏱️ Pomodoro</h3>
+      <p class="text-text-dim text-sm">Gunakan timer 25 menit untuk sesi fokus belajar. Waktu fokus akan tercatat di statistik.</p>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<script>
+// ===================== DATA =====================
+const materialsData = [
+  {
+    id: "neuro-1",
+    title: "Neuroanatomi 1 — Sistem Saraf Pusat",
+    category: "neuro",
+    description: "Struktur dan fungsi otak, sumsum tulang belakang, dan sistem saraf pusat.",
+    content: `
+      <h2 class="text-xl font-semibold text-text mb-3">Sistem Saraf Pusat (SSP)</h2>
+      <p class="text-text-dim leading-relaxed mb-4">Sistem Saraf Pusat terdiri dari otak dan sumsum tulang belakang. SSP bertanggung jawab atas pemrosesan informasi, koordinasi gerakan, dan regulasi fungsi tubuh.</p>
+      <h3 class="text-lg font-medium text-cyan mb-2">1. Otak (Encephalon)</h3>
+      <p class="text-text-dim leading-relaxed mb-4">Otak terbagi menjadi beberapa bagian utama:</p>
+      <ul class="list-disc list-inside text-text-dim space-y-1 mb-4 ml-2">
+        <li><strong class="text-text">Otak Besar (Cerebrum):</strong> Pusat pemikiran, memori, dan perasaan. Terdiri dari dua hemisfer (kiri dan kanan).</li>
+        <li><strong class="text-text">Otak Kecil (Cerebellum):</strong> Mengatur keseimbangan, koordinasi gerakan, dan postur tubuh.</li>
+        <li><strong class="text-text">Batang Otak (Brainstem):</strong> Terdiri dari mesensephalon, pons, dan medulla oblongata. Mengatur fungsi vital seperti pernapasan dan detak jantung.</li>
+      </ul>
+      <h3 class="text-lg font-medium text-cyan mb-2">2. Sumsum Tulang Belakang (Medulla Spinalis)</h3>
+      <p class="text-text-dim leading-relaxed mb-4">Sumsum tulang belakang berada di dalam kanal vertebral dan berfungsi sebagai jalur penghantar impuls antara otak dan tubuh. Terdiri dari materi abu-abu (neuron) di bagian dalam dan materi putih (serat mielin) di bagian luar.</p>
+      <h3 class="text-lg font-medium text-cyan mb-2">3. Meninges</h3>
+      <p class="text-text-dim leading-relaxed mb-4">Tiga lapis pelindung SSP:</p>
+      <ul class="list-disc list-inside text-text-dim space-y-1 mb-4 ml-2">
+        <li><strong class="text-text">Dura mater:</strong> Lapisan terluar, tebal dan fibrosa.</li>
+        <li><strong class="text-text">Arachnoidea:</strong> Lapisan tengah, berbentuk jaring laba-laba.</li>
+        <li><strong class="text-text">Pia mater:</strong> Lapisan terdalam, menempel langsung pada SSP.</li>
+      </ul>
+    `
+  },
+  {
+    id: "neuro-2",
+    title: "Neuroanatomi 2 — Sistem Saraf Tepi",
+    category: "neuro",
+    description: "Saraf kranial, saraf spinal, dan ganglia.",
+    content: `
+      <h2 class="text-xl font-semibold text-text mb-3">Sistem Saraf Tepi (SST)</h2>
+      <p class="text-text-dim leading-relaxed mb-4">Sistem Saraf Tepi terdiri dari saraf dan ganglia yang berada di luar SSP. SST menghubungkan SSP dengan organ target.</p>
+      <h3 class="text-lg font-medium text-cyan mb-2">1. Saraf Kranial</h3>
+      <p class="text-text-dim leading-relaxed mb-4">Terdapat 12 pasang saraf kranial yang keluar dari otak:</p>
+      <ul class="list-disc list-inside text-text-dim space-y-1 mb-4 ml-2">
+        <li><strong class="text-text">N. Olfactorius (I):</strong> Saraf penciuman.</li>
+        <li><strong class="text-text">N. Opticus (II):</strong> Saraf penglihatan.</li>
+        <li><strong class="text-text">N. Oculomotorius (III):</strong> Menggerakkan sebagian besar otot mata.</li>
+        <li><strong class="text-text">N. Trigeminus (V):</strong> Sensasi wajah dan pengunyahan.</li>
+        <li><strong class="text-text">N. Facialis (VII):</strong> Ekspresi wajah dan pengecapan.</li>
+        <li><strong class="text-text">N. Vagus (X):</strong> Saraf paling panjang, mengatur organ visceral.</li>
+      </ul>
+      <h3 class="text-lg font-medium text-cyan mb-2">2. Saraf Spinal</h3>
+      <p class="text-text-dim leading-relaxed mb-4">Terdapat 31 pasang saraf spinal yang terdiri dari: 8 servikal, 12 torakal, 5 lumbal, 5 sakral, dan 1 koksigcal.</p>
+      <h3 class="text-lg font-medium text-cyan mb-2">3. Plexus</h3>
+      <p class="text-text-dim leading-relaxed mb-4">Jaringan saraf penting meliputi plexus brachialis (lengan), plexus lumbosakral (kaki), dan plexus servikal (leher).</p>
+    `
+  },
+  {
+    id: "neuro-3",
+    title: "Neuroanatomi 3 — Jalur Sensorik & Motorik",
+    category: "neuro",
+    description: "Jalur konduksi impuls saraf menuju dan dari SSP.",
+    content: `
+      <h2 class="text-xl font-semibold text-text mb-3">Jalur Konduksi SSP</h2>
+      <h3 class="text-lg font-medium text-cyan mb-2">1. Jalur Sensorik (Aferen)</h3>
+      <p class="text-text-dim leading-relaxed mb-4">Mengantar impuls dari reseptor perifer menuju SSP:</p>
+      <ul class="list-disc list-inside text-text-dim space-y-1 mb-4 ml-2">
+        <li><strong class="text-text">Jalur dorsal kolom:</strong> Propriosepsi, vibrasi, tekanan halus.</li>
+        <li><strong class="text-text">Jalur spinothalamik:</strong> Nyeri, suhu, sentuhan kasar.</li>
+        <li><strong class="text-text">Jalur spinoserebellar:</strong> Propriosepsi ke cerebellum.</li>
+      </ul>
+      <h3 class="text-lg font-medium text-cyan mb-2">2. Jalur Motorik (Eferen)</h3>
+      <p class="text-text-dim leading-relaxed mb-4">Mengantar impuls dari SSP menuju efektor (otot dan kelenjar):</p>
+      <ul class="list-disc list-inside text-text-dim space-y-1 mb-4 ml-2">
+        <li><strong class="text-text">Jalur kortikospinal:</strong> Gerakan volunter, terdiri dari traktus kortikospinal lateral dan anterior.</li>
+        <li><strong class="text-text">Jalur ekstrapiramidal:</strong> Gerakan involunter, tonus otot, postur.</li>
+      </ul>
+    `
+  },
+  {
+    id: "histologi-1",
+    title: "Histologi 1 — Jaringan Epitel",
+    category: "histologi",
+    description: "Klasifikasi, struktur, dan fungsi jaringan epitel.",
+    content: `
+      <h2 class="text-xl font-semibold text-text mb-3">Jaringan Epitel</h2>
+      <p class="text-text-dim leading-relaxed mb-4">Jaringan epitel menutupi permukaan tubuh, melapisi rongga, dan membentuk kelenjar. Ciri khas: sel rapat, sedikit matriks interseluler, avaskular.</p>
+      <h3 class="text-lg font-medium text-cyan mb-2">1. Klasifikasi Berdasarkan Lapisan</h3>
+      <ul class="list-disc list-inside text-text-dim space-y-1 mb-4 ml-2">
+        <li><strong class="text-text">Epitel tunggal (simple):</strong> Satu lapisan sel.</li>
+        <li><strong class="text-text">Epitel berlapis (stratified):</strong> Dua atau lebih lapisan sel.</li>
+        <li><strong class="text-text">Epitel pseudostratified:</strong> Tampak berlapis tetapi sebenarnya tunggal.</li>
+        <li><strong class="text-text">Epitel transisional:</strong> Bentuk sel berubah sesuai distensi.</li>
+      </ul>
+      <h3 class="text-lg font-medium text-cyan mb-2">2. Klasifikasi Berdasarkan Bentuk Sel</h3>
+      <ul class="list-disc list-inside text-text-dim space-y-1 mb-4 ml-2">
+        <li><strong class="text-text">Squamous (pipih):</strong> Fungsi difusi dan proteksi.</li>
+        <li><strong class="text-text">Kuboidal:</strong> Fungsi sekresi dan absorbsi.</li>
+        <li><strong class="text-text">Kolumnar:</strong> Fungsi absorbsi dan sekresi.</li>
+      </ul>
+    `
+  },
+  {
+    id: "histologi-2",
+    title: "Histologi 2 — Jaringan Ikat",
+    category: "histologi",
+    description: "Matriks ekstraseluler, serat, dan sel jaringan ikat.",
+    content: `
+      <h2 class="text-xl font-semibold text-text mb-3">Jaringan Ikat</h2>
+      <p class="text-text-dim leading-relaxed mb-4">Jaringan ikat memiliki sel yang tersebar dalam matriks ekstraseluler yang kaya akan serat. Fungsi: penopang, perlindungan, penyimpanan, transportasi.</p>
+      <h3 class="text-lg font-medium text-cyan mb-2">1. Jaringan Ikat Longgar</h3>
+      <p class="text-text-dim leading-relaxed mb-4">Matriks berupa gel (ground substance) dengan serat kolagen, elastik, dan retikuler. Sel: fibroblas, makrofag, mastosit, plasma cell.</p>
+      <h3 class="text-lg font-medium text-cyan mb-2">2. Jaringan Ikat Padat</h3>
+      <ul class="list-disc list-inside text-text-dim space-y-1 mb-4 ml-2">
+        <li><strong class="text-text">Padat teratur:</strong> Tendon, ligamentum. Seraf kolagen sejajar.</li>
+        <li><strong class="text-text">Padat tidak teratur:</strong> Dermis kulit. Serat kolagen acak.</li>
+      </ul>
+      <h3 class="text-lg font-medium text-cyan mb-2">3. Jaringan Ikat Khusus</h3>
+      <ul class="list-disc list-inside text-text-dim space-y-1 mb-4 ml-2">
+        <li><strong class="text-text">Tulang rawan (cartilage):</strong> Chondroblas, matriks padat.</li>
+        <li><strong class="text-text">Tulang (bone):</strong> Osteoblas, osteosit, matriks terkalsifikasi.</li>
+        <li><strong class="text-text">Darah:</strong> Sel darah dalam matriks cair (plasma).</li>
+        <li><strong class="text-text">Lemak:</strong> Adiposit untuk penyimpanan energi.</li>
+      </ul>
+    `
+  },
+  {
+    id: "histologi-3",
+    title: "Histologi 3 — Jaringan Otot & Saraf",
+    category: "histologi",
+    description: "Struktur mikroskopis otot dan neuron.",
+    content: `
+      <h2 class="text-xl font-semibold text-text mb-3">Jaringan Otot</h2>
+      <h3 class="text-lg font-medium text-cyan mb-2">1. Otot Polos</h3>
+      <p class="text-text-dim leading-relaxed mb-4">Sel berbentuk gelondongan, inti tunggal di tengah, tidak berstriasi. Ditemukan pada dinding organ berongga (visceral). Kontraksi involunter.</p>
+      <h3 class="text-lg font-medium text-cyan mb-2">2. Otot Rangka (Skeletal)</h3>
+      <p class="text-text-dim leading-relaxed mb-4">Sel panjang (serabut otot), multinukleat di perifer, berstriasi. Terikat pada tulang. Kontraksi volunter.</p>
+      <h3 class="text-lg font-medium text-cyan mb-2">3. Otot Jantung</h3>
+      <p class="text-text-dim leading-relaxed mb-4">Sel bercabang, inti tunggal di tengah, berstriasi, memiliki diskus interkalatus. Kontraksi involunter, autoritmik.</p>
+      <h2 class="text-xl font-semibold text-text mb-3 mt-6">Jaringan Saraf</h2>
+      <p class="text-text-dim leading-relaxed mb-4">Unit struktural dan fungsional adalah neuron:</p>
+      <ul class="list-disc list-inside text-text-dim space-y-1 mb-4 ml-2">
+        <li><strong class="text-text">Badan sel (soma):</strong> Mengandung inti dan organel.</li>
+        <li><strong class="text-text">Dendrit:</strong> Menerima impuls dari neuron lain.</li>
+        <li><strong class="text-text">Akson:</strong> Menghantarkan impuls menjauhi badan sel.</li>
+        <li><strong class="text-text">Sel glial:</strong> Astrosit, oligodendrosit, mikroglia, sel Schwann.</li>
+      </ul>
+    `
+  },
+  {
+    id: "histologi-4",
+    title: "Histologi 4 — Sistem Kardiovaskular",
+    category: "histologi",
+    description: "Struktur histologis jantung, pembuluh darah, dan darah.",
+    content: `
+      <h2 class="text-xl font-semibold text-text mb-3">Jantung</h2>
+      <p class="text-text-dim leading-relaxed mb-4">Dinding jantung terdiri dari tiga lapis:</p>
+      <ul class="list-disc list-inside text-text-dim space-y-1 mb-4 ml-2">
+        <li><strong class="text-text">Endokard:</strong> Lapisan dalam, epitel endotelium.</li>
+        <li><strong class="text-text">Miokard:</strong> Lapisan tengah, otot jantung tebal.</li>
+        <li><strong class="text-text">Epikard:</strong> Lapisan luar, mesotelium + jaringan ikat lemak.</li>
+      </ul>
+      <h3 class="text-lg font-medium text-cyan mb-2">Pembuluh Darah</h3>
+      <ul class="list-disc list-inside text-text-dim space-y-1 mb-4 ml-2">
+        <li><strong class="text-text">Arteri:</strong> Dinding tebal, tiga lapis (tunica intima, media, adventitia). Banyak serat elastik dan otot polos.</li>
+        <li><strong class="text-text">Vena:</strong> Dinding lebih tipis, lumen lebih besar, memiliki katup.</li>
+        <li><strong class="text-text">Kapiler:</strong> Dinding satu lapis sel endotelium.</li>
+      </ul>
+    `
+  },
+  {
+    id: "neuro-4",
+    title: "Neuroanatomi 4 — Sistem Limbik & Memori",
+    category: "neuro",
+    description: "Amon, hipokampus, amigdala, dan sirkuit emosi.",
+    content: `
+      <h2 class="text-xl font-semibold text-text mb-3">Sistem Limbik</h2>
+      <p class="text-text-dim leading-relaxed mb-4">Sistem limbik mengatur emosi, perilaku, motivasi, dan memori jangka panjang. Terletak di dalam otak besar.</p>
+      <h3 class="text-lg font-medium text-cyan mb-2">Komponen Utama</h3>
+      <ul class="list-disc list-inside text-text-dim space-y-1 mb-4 ml-2">
+        <li><strong class="text-text">Hipokampus:</strong> Membentuk memori eksplisit baru (deklaratif).</li>
+        <li><strong class="text-text">Amigdala:</strong> Memproses emosi, terutama ketakutan dan ancaman.</li>
+        <li><strong class="text-text">Hypothalamus:</strong> Mengatur homeostasis, nafsu makan, suhu, siklus tidur.</li>
+        <li><strong class="text-text">Thalamus:</strong> Stasiun relay sensorik ke korteks.</li>
+        <li><strong class="text-text">Cingulate gyrus:</strong> Menghubungkan limbik dengan korteks prefrontal.</li>
+      </ul>
+      <h3 class="text-lg font-medium text-cyan mb-2">Sirkuit Papez</h3>
+      <p class="text-text-dim leading-relaxed mb-4">Sirkuit neural yang menghubungkan hipokampus → forniks → mammillary body → thalamus anterior → cingulate gyrus → kembali ke hipokampus. Berperan dalam pembentukan memori.</p>
+    `
+  }
+];
+
+const quizzesData = [
+  {
+    id: "neuro-1",
+    title: "Kuis SSP & Meninges",
+    category: "neuro",
+    questions: [
+      { q: "Berapa jumlah lapisan meninges yang melindungi SSP?", options: ["2 lapisan", "3 lapisan", "4 lapisan", "5 lapisan"], correct: 1 },
+      { q: "Bagian otak yang mengatur keseimbangan dan koordinasi gerakan adalah?", options: ["Otak besar", "Otak kecil", "Batang otak", "Thalamus"], correct: 1 },
+      { q: "Lapisan meninges terdalam yang menempel langsung pada SSP adalah?", options: ["Dura mater", "Arachnoidea", "Pia mater", "Subarachnoid"], correct: 2 },
+      { q: "Fungsi utama medulla oblongata adalah?", options: ["Penglihatan", "Fungsi vital (napas & jantung)", "Pendengaran", "Keseimbangan"], correct: 1 }
+    ]
+  },
+  {
+    id: "neuro-2",
+    title: "Kuis Saraf Kranial & Spinal",
+    category: "neuro",
+    questions: [
+      { q: "Berapa pasang saraf kranial pada manusia?", options: ["10", "12", "14", "31"], correct: 1 },
+      { q: "Saraf kranial yang mengatur penglihatan adalah?", options: ["N. I", "N. II", "N. III", "N. V"], correct: 1 },
+      { q: "Saraf vagus (N. X) berfungsi mengatur?", options: ["Ekspresi wajah", "Organ visceral", "Pengunyahan", "Gerakan mata"], correct: 1 },
+      { q: "Berapa pasang saraf spinal?", options: ["12", "24", "31", "33"], correct: 2 }
+    ]
+  },
+  {
+    id: "histologi-1",
+    title: "Kuis Jaringan Epitel & Ikat",
+    category: "histologi",
+    questions: [
+      { q: "Ciri khas jaringan epitel adalah?", options: ["Banyak matriks", "Sel rapat, avaskular", "Banyak serat", "Vaskular"], correct: 1 },
+      { q: "Epitel yang tampak berlapis tetapi sebenarnya tunggal disebut?", options: ["Stratified", "Pseudostratified", "Transisional", "Simple"], correct: 1 },
+      { q: "Sel utama jaringan ikat longgar adalah?", options: ["Osteoblas", "Fibroblas", "Chondroblas", "Adiposit"], correct: 1 },
+      { q: "Jaringan ikat yang matriksnya terkalsifikasi adalah?", options: ["Tulang rawan", "Tulang", "Darah", "Lemak"], correct: 1 }
+    ]
+  },
+  {
+    id: "histologi-2",
+    title: "Kuis Otot, Saraf & Kardiovaskular",
+    category: "histologi",
+    questions: [
+      { q: "Otot yang memiliki diskus interkalatus adalah?", options: ["Otot polos", "Otot rangka", "Otot jantung", "Otot visceral"], correct: 2 },
+      { q: "Unit struktural jaringan saraf adalah?", options: ["Glial", "Neuron", "Akson", "Dendrit"], correct: 1 },
+      { q: "Lapisan tengah dinding jantung yang terdiri dari otot jantung adalah?", options: ["Endokard", "Epikard", "Miokard", "Perikard"], correct: 2 },
+      { q: "Pembuluh darah dengan dinding paling tipis adalah?", options: ["Arteri", "Vena", "Kapiler", "Arteriol"], correct: 2 }
+    ]
+  }
+];
+
+const examsData = [
+  {
+    id: "exam-neuro",
+    title: "Ujian Neuroanatomi",
+    description: "30 soal pilihan ganda • 60 menit",
+    questions: [
+      { q: "Otak besar terdiri dari berapa hemisfer?", options: ["1", "2", "3", "4"], correct: 1 },
+      { q: "Bagian otak yang mengatur fungsi vital adalah?", options: ["Cerebrum", "Cerebellum", "Medulla oblongata", "Hipokampus"], correct: 2 },
+      { q: "Lapisan terluar meninges adalah?", options: ["Pia mater", "Arachnoidea", "Dura mater", "Subdural"], correct: 2 },
+      { q: "Saraf kranial yang berhubungan dengan penciuman adalah?", options: ["N. I", "N. II", "N. III", "N. IV"], correct: 0 },
+      { q: "Jumlah pasang saraf spinal adalah?", options: ["12", "21", "31", "41"], correct: 2 },
+      { q: "Jalur sensorik untuk propriosepsi adalah?", options: ["Spinothalamik", "Dorsal kolom", "Kortikospinal", "Spinocerebellar"], correct: 1 },
+      { q: "Plexus yang menginnervasi lengan adalah?", options: ["Lumbal", "Sakral", "Brachialis", "Servikal"], correct: 2 },
+      { q: "Bagian neuron yang menerima impuls adalah?", options: ["Akson", "Dendrit", "Soma", "Terminal akson"], correct: 1 },
+      { q: "Sel glial yang membentuk mielin di SSP adalah?", options: ["Sel Schwann", "Astrosit", "Oligodendrosit", "Mikroglia"], correct: 2 },
+      { q: "Hipokampus berperan dalam?", options: ["Penglihatan", "Memori", "Gerakan", "Emosi"], correct: 1 }
+    ]
+  },
+  {
+    id: "exam-histologi",
+    title: "Ujian Histologi",
+    description: "30 soal pilihan ganda • 60 menit",
+    questions: [
+      { q: "Epitel yang fungsinya difusi dan proteksi adalah?", options: ["Kuboidal", "Kolumnar", "Squamous", "Transisional"], correct: 2 },
+      { q: "Jaringan ikat yang matriksnya berupa plasma adalah?", options: ["Tulang", "Darah", "Lemak", "Tulang rawan"], correct: 1 },
+      { q: "Serabut otot rangka memiliki ciri?", options: ["Uninukleat", "Multinukleat", "Inti tengah", "Bercabang"], correct: 1 },
+      { q: "Otot yang kontraksinya involunter dan autoritmik adalah?", options: ["Rangka", "Polos", "Jantung", "Visceral"], correct: 2 },
+      { q: "Lapisan terluar dinding jantung adalah?", options: ["Endokard", "Miokard", "Epikard", "Perikard"], correct: 2 },
+      { q: "Pembuluh darah yang memiliki katup adalah?", options: ["Arteri", "Arteriol", "Vena", "Kapiler"], correct: 2 },
+      { q: "Sel yang menghasilkan serat kolagen adalah?", options: ["Makrofag", "Fibroblas", "Mastosit", "Plasma cell"], correct: 1 },
+      { q: "Epitel transisional ditemukan di?", options: ["Kulit", "Usus", "Kandung kemih", "Paru-paru"], correct: 2 },
+      { q: "Tendon terdiri dari jaringan ikat?", options: ["Longgar", "Padat teratur", "Padat tidak teratur", "Adiposa"], correct: 1 },
+      { q: "Sel darah merah tidak memiliki?", options: ["Hemoglobin", "Inti", "Mitokondria", "Keduanya B & C"], correct: 3 }
+    ]
+  }
+];
+
+const flashcardsData = [
+  { id: "f1", category: "neuro", front: "Apa fungsi otak kecil (cerebellum)?", back: "Mengatur keseimbangan, koordinasi gerakan, dan postur tubuh." },
+  { id: "f2", category: "neuro", front: "Sebutkan 3 lapisan meninges!", back: "Dura mater, arachnoidea, dan pia mater." },
+  { id: "f3", category: "neuro", front: "Apa fungsi saraf vagus (N. X)?", back: "Mengatur organ visceral (jantung, paru, pencernaan)." },
+  { id: "f4", category: "neuro", front: "Jalur sensorik untuk nyeri dan suhu?", back: "Jalur spinothalamik." },
+  { id: "f5", category: "neuro", front: "Apa fungsi hipokampus?", back: "Pembentukan memori jangka panjang (deklaratif)." },
+  { id: "f6", category: "neuro", front: "Sel glial pembentuk mielin di SST?", back: "Sel Schwann." },
+  { id: "f7", category: "histologi", front: "Ciri khas jaringan epitel?", back: "Sel rapat, sedikit matriks interseluler, avaskular." },
+  { id: "f8", category: "histologi", front: "Sel utama jaringan ikat longgar?", back: "Fibroblas." },
+  { id: "f9", category: "histologi", front: "Otot dengan diskus interkalatus?", back: "Otot jantung." },
+  { id: "f10", category: "histologi", front: "Lapisan tengah dinding jantung?", back: "Miokard (otot jantung)." },
+  { id: "f11", category: "histologi", front: "Pembuluh darah dengan dinding ter tipis?", back: "Kapiler (satu lapis endotelium)." },
+  { id: "f12", category: "histologi", front: "Epitel di kandung kemih?", back: "Epitel transisional." }
+];
+
+// ===================== STATE =====================
+function getDefaultState() {
+  return {
+    currentPage: "dashboard",
+    selectedMaterialId: null,
+    selectedQuizId: null,
+    selectedExamId: null,
+    streak: 5,
+    totalCorrect: 24,
+    materialsProgress: {},
+    quizScores: {},
+    examHistory: [],
+    notes: {},
+    focusTime: 150,
+    activities: [
+      {id:"a1", type:"material", description:"Neuroanatomi 1 — Selesai", time:"2 jam lalu"},
+      {id:"a2", type:"quiz", description:"Kuis SSP — 4/4 benar", time:"3 jam lalu"},
+      {id:"a3", type:"pomodoro", description:"Pomodoro — 45 menit", time:"5 jam lalu"},
+      {id:"a4", type:"flashcard", description:"Flashcard — 12 kartu", time:"Kemarin"}
+    ]
+  };
+}
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem("medstudy-state");
+    if (raw) return { ...getDefaultState(), ...JSON.parse(raw) };
+  } catch(e) {}
+  return getDefaultState();
+}
+
+let state = loadState();
+
+function saveState() {
+  localStorage.setItem("medstudy-state", JSON.stringify(state));
+}
+
+// ===================== NAVIGATION =====================
+function navigate(page, params = {}) {
+  state.currentPage = page;
+  if (params.materialId) state.selectedMaterialId = params.materialId;
+  if (params.quizId) state.selectedQuizId = params.quizId;
+  if (params.examId) state.selectedExamId = params.examId;
+  saveState();
+  render();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function render() {
+  // Hide all pages
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  // Show current
+  const pageEl = document.getElementById('page-' + state.currentPage);
+  if (pageEl) pageEl.classList.add('active');
+
+  // Update nav
+  document.querySelectorAll('[id^="nav-"]').forEach(el => {
+    const page = el.id.replace('nav-', '');
+    const underline = el.querySelector('.nav-underline');
+    if (page === state.currentPage || (page === 'materials' && state.currentPage === 'material-detail') || (page === 'quiz' && state.currentPage === 'quiz-run') || (page === 'exam' && state.currentPage === 'exam-run')) {
+      el.classList.remove('text-text-dim');
+      el.classList.add('text-text');
+      if (underline) { underline.style.opacity = '1'; underline.classList.add('nav-glow'); }
+    } else {
+      el.classList.add('text-text-dim');
+      el.classList.remove('text-text');
+      if (underline) { underline.style.opacity = '0'; underline.classList.remove('nav-glow'); }
+    }
+  });
+
+  // Render page content
+  if (state.currentPage === 'dashboard') renderDashboard();
+  if (state.currentPage === 'materials') renderMaterials();
+  if (state.currentPage === 'material-detail') renderMaterialDetail();
+  if (state.currentPage === 'quiz') renderQuizList();
+  if (state.currentPage === 'quiz-run') renderQuizRun();
+  if (state.currentPage === 'quiz-result') renderQuizResult();
+  if (state.currentPage === 'exam') renderExamList();
+  if (state.currentPage === 'exam-run') renderExamRun();
+  if (state.currentPage === 'exam-result') renderExamResult();
+  if (state.currentPage === 'flashcards') renderFlashcards();
+  if (state.currentPage === 'settings') renderSettings();
+}
+
+// ===================== DASHBOARD =====================
+function renderDashboard() {
+  document.getElementById('dash-streak').textContent = state.streak + ' hari';
+  document.getElementById('dash-correct').textContent = state.totalCorrect + ' soal';
+  document.getElementById('dash-focus').textContent = state.focusTime + ' menit';
+  const completed = Object.values(state.materialsProgress).filter(p => p >= 100).length;
+  document.getElementById('dash-progress').textContent = completed + '/' + materialsData.length;
+
+  // Activities
+  const actContainer = document.getElementById('activity-list');
+  actContainer.innerHTML = state.activities.slice(0, 6).map(a => {
+    let icon = '';
+    if (a.type === 'material') icon = '<svg class="w-4 h-4 text-cyan" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>';
+    else if (a.type === 'quiz') icon = '<svg class="w-4 h-4 text-success" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>';
+    else if (a.type === 'pomodoro') icon = '<svg class="w-4 h-4 text-danger" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>';
+    else icon = '<svg class="w-4 h-4 text-warning" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>';
+    return `<div class="flex items-center gap-3 p-3 rounded-lg bg-surface/50 border border-cyan/10">
+      <div class="w-8 h-8 rounded-lg bg-cyan/10 flex items-center justify-center shrink-0">${icon}</div>
+      <div class="flex-1 min-w-0"><div class="text-sm text-text truncate">${a.description}</div><div class="text-xs text-text-dim">${a.time}</div></div>
+    </div>`;
+  }).join('');
+
+  // Progress list
+  const progContainer = document.getElementById('progress-list');
+  progContainer.innerHTML = materialsData.map(m => {
+    const prog = state.materialsProgress[m.id] || 0;
+    return `<div>
+      <div class="flex justify-between text-xs mb-1"><span class="text-text">${m.title.split(' — ')[0]}</span><span class="text-text-dim">${prog}%</span></div>
+      <div class="w-full h-1.5 bg-surface rounded-full overflow-hidden"><div class="h-full progress-bar rounded-full transition-all" style="width:${prog}%"></div></div>
+    </div>`;
+  }).join('');
+}
+
+// ===================== MATERIALS =====================
+function renderMaterials() {
+  const grid = document.getElementById('materials-grid');
+  grid.innerHTML = materialsData.map(m => {
+    const prog = state.materialsProgress[m.id] || 0;
+    const catColor = m.category === 'neuro' ? 'text-cyan' : 'text-success';
+    const catBg = m.category === 'neuro' ? 'bg-cyan/20' : 'bg-success/20';
+    const catLabel = m.category === 'neuro' ? 'Neuroanatomi' : 'Histologi';
+    return `<div class="glass rounded-xl p-5 relative overflow-hidden shimmer cursor-pointer group" onclick="navigate('material-detail', {materialId:'${m.id}'})">
+      <div class="flex items-center gap-2 mb-3">
+        <span class="px-2 py-0.5 rounded-full text-[11px] font-medium ${catBg} ${catColor}">${catLabel}</span>
+      </div>
+      <h3 class="text-text font-semibold mb-1 group-hover:text-cyan transition-colors">${m.title}</h3>
+      <p class="text-text-dim text-sm mb-4 line-clamp-2">${m.description}</p>
+      <div class="flex items-center justify-between">
+        <div class="flex-1 mr-3"><div class="w-full h-1.5 bg-surface rounded-full overflow-hidden"><div class="h-full progress-bar rounded-full transition-all" style="width:${prog}%"></div></div></div>
+        <span class="text-xs text-text-dim">${prog}%</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderMaterialDetail() {
+  const m = materialsData.find(x => x.id === state.selectedMaterialId);
+  if (!m) { navigate('materials'); return; }
+  const container = document.getElementById('material-content');
+  container.innerHTML = `
+    <div class="glass rounded-xl p-6 md:p-8 mb-6">
+      <div class="flex items-center gap-2 mb-3">
+        <span class="px-2 py-0.5 rounded-full text-[11px] font-medium ${m.category === 'neuro' ? 'bg-cyan/20 text-cyan' : 'bg-success/20 text-success'}">${m.category === 'neuro' ? 'Neuroanatomi' : 'Histologi'}</span>
+      </div>
+      <h1 class="font-display text-2xl md:text-3xl text-text mb-4">${m.title}</h1>
+      <div class="prose prose-invert max-w-none text-text-dim leading-relaxed">${m.content}</div>
+      <div class="mt-6 flex gap-3">
+        <button onclick="markMaterialComplete('${m.id}')" class="btn-primary px-5 py-2 rounded-lg text-sm">Tandai Selesai</button>
+        <button onclick="navigate('quiz', {quizId:'${m.id}'})" class="px-5 py-2 rounded-lg border border-cyan/30 text-text hover:bg-cyan/10 transition-colors text-sm">Kerjakan Kuis</button>
+      </div>
+    </div>
+  `;
+  const note = state.notes[m.id] || '';
+  document.getElementById('note-textarea').value = note;
+}
+
+function markMaterialComplete(id) {
+  state.materialsProgress[id] = 100;
+  const m = materialsData.find(x => x.id === id);
+  addActivity('material', m.title.split(' — ')[0] + ' — Selesai');
+  saveState();
+  renderMaterialDetail();
+  renderDashboard();
+}
+
+function saveNote() {
+  const val = document.getElementById('note-textarea').value;
+  if (state.selectedMaterialId) {
+    state.notes[state.selectedMaterialId] = val;
+    saveState();
+    alert('Catatan disimpan!');
+  }
+}
+
+// ===================== QUIZ =====================
+let quizState = { questions: [], current: 0, correct: 0, answers: [] };
+
+function renderQuizList() {
+  const list = document.getElementById('quiz-list');
+  list.innerHTML = quizzesData.map(q => {
+    const score = state.quizScores[q.id];
+    const scoreText = score ? `<span class="text-success text-xs">${score.correct}/${score.total} benar</span>` : '<span class="text-text-dim text-xs">Belum dikerjakan</span>';
+    const catColor = q.category === 'neuro' ? 'text-cyan' : 'text-success';
+    const catBg = q.category === 'neuro' ? 'bg-cyan/20' : 'bg-success/20';
+    return `<div class="glass rounded-xl p-5 cursor-pointer hover:border-cyan/50 transition-all" onclick="startQuiz('${q.id}')">
+      <div class="flex items-center justify-between mb-2">
+        <span class="px-2 py-0.5 rounded-full text-[11px] font-medium ${catBg} ${catColor}">${q.category === 'neuro' ? 'Neuroanatomi' : 'Histologi'}</span>
+        ${scoreText}
+      </div>
+      <h3 class="text-text font-semibold mb-1">${q.title}</h3>
+      <p class="text-text-dim text-sm">${q.questions.length} soal pilihan ganda</p>
+    </div>`;
+  }).join('');
+}
+
+function startQuiz(id) {
+  const quiz = quizzesData.find(q => q.id === id);
+  if (!quiz) return;
+  quizState = { questions: quiz.questions, current: 0, correct: 0, answers: [], quizId: id };
+  navigate('quiz-run');
+}
+
+function renderQuizRun() {
+  const q = quizState.questions[quizState.current];
+  document.getElementById('quiz-current').textContent = quizState.current + 1;
+  document.getElementById('quiz-total').textContent = quizState.questions.length;
+  document.getElementById('quiz-progress-bar').style.width = ((quizState.current / quizState.questions.length) * 100) + '%';
+
+  const container = document.getElementById('quiz-question-container');
+  container.innerHTML = `
+    <div class="mb-6">
+      <h3 class="text-lg text-text font-medium leading-relaxed">${q.q}</h3>
+    </div>
+    <div class="space-y-3">
+      ${q.options.map((opt, i) => `<button onclick="answerQuiz(${i})" class="option-btn w-full text-left p-4 rounded-lg bg-surface/50 text-text text-sm flex items-center gap-3" data-idx="${i}">
+        <span class="w-7 h-7 rounded-full bg-cyan/20 text-cyan flex items-center justify-center text-xs font-semibold shrink-0">${String.fromCharCode(65+i)}</span>
+        <span>${opt}</span>
+      </button>`).join('')}
+    </div>
+  `;
+}
+
+function answerQuiz(idx) {
+  const q = quizState.questions[quizState.current];
+  const btns = document.querySelectorAll('.option-btn');
+  btns.forEach(b => b.classList.add('disabled'));
+  if (idx === q.correct) {
+    btns[idx].classList.add('correct');
+    quizState.correct++;
+  } else {
+    btns[idx].classList.add('wrong');
+    btns[q.correct].classList.add('correct');
+  }
+  quizState.answers.push(idx);
+  setTimeout(() => {
+    quizState.current++;
+    if (quizState.current >= quizState.questions.length) {
+      finishQuiz();
+    } else {
+      renderQuizRun();
+    }
+  }, 1200);
+}
+
+function finishQuiz() {
+  const total = quizState.questions.length;
+  const correct = quizState.correct;
+  state.quizScores[quizState.quizId] = { correct, total };
+  state.totalCorrect += correct;
+  const quiz = quizzesData.find(q => q.id === quizState.quizId);
+  addActivity('quiz', quiz.title + ' — ' + correct + '/' + total + ' benar');
+  saveState();
+  navigate('quiz-result');
+}
+
+function renderQuizResult() {
+  const total = quizState.questions.length;
+  const correct = quizState.correct;
+  document.getElementById('result-score').textContent = correct + '/' + total;
+  document.getElementById('result-percentage').textContent = Math.round((correct/total)*100) + '% benar';
+}
+
+function retryQuiz() {
+  startQuiz(quizState.quizId);
+}
+
+// ===================== EXAM =====================
+let examState = { questions: [], current: 0, correct: 0, answers: [], examId: null, startTime: 0, timerInterval: null, timeLeft: 3600 };
+
+function renderExamList() {
+  const list = document.getElementById('exam-list');
+  list.innerHTML = examsData.map(e => {
+    const history = state.examHistory.filter(h => h.examId === e.id);
+    const last = history[0];
+    const scoreText = last ? `<span class="text-success text-xs">Terakhir: ${last.correct}/${last.total}</span>` : '<span class="text-text-dim text-xs">Belum dikerjakan</span>';
+    return `<div class="glass rounded-xl p-5 cursor-pointer hover:border-cyan/50 transition-all" onclick="startExam('${e.id}')">
+      <div class="flex items-center justify-between mb-2">
+        <span class="px-2 py-0.5 rounded-full text-[11px] font-medium bg-cyan/20 text-cyan">Ujian</span>
+        ${scoreText}
+      </div>
+      <h3 class="text-text font-semibold mb-1">${e.title}</h3>
+      <p class="text-text-dim text-sm">${e.description}</p>
+    </div>`;
+  }).join('');
+}
+
+function startExam(id) {
+  const exam = examsData.find(e => e.id === id);
+  if (!exam) return;
+  examState = { questions: exam.questions, current: 0, correct: 0, answers: [], examId: id, startTime: Date.now(), timeLeft: 3600 };
+  navigate('exam-run');
+  startExamTimer();
+}
+
+function startExamTimer() {
+  if (examState.timerInterval) clearInterval(examState.timerInterval);
+  examState.timerInterval = setInterval(() => {
+    examState.timeLeft--;
+    const m = Math.floor(examState.timeLeft / 60);
+    const s = examState.timeLeft % 60;
+    const el = document.getElementById('exam-timer');
+    if (el) el.textContent = String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+    if (examState.timeLeft <= 0) { clearInterval(examState.timerInterval); finishExam(); }
+  }, 1000);
+}
+
+function renderExamRun() {
+  const q = examState.questions[examState.current];
+  document.getElementById('exam-current').textContent = examState.current + 1;
+  document.getElementById('exam-total').textContent = examState.questions.length;
+  document.getElementById('exam-progress-bar').style.width = ((examState.current / examState.questions.length) * 100) + '%';
+
+  const container = document.getElementById('exam-question-container');
+  container.innerHTML = `
+    <div class="mb-6">
+      <h3 class="text-lg text-text font-medium leading-relaxed">${q.q}</h3>
+    </div>
+    <div class="space-y-3">
+      ${q.options.map((opt, i) => `<button onclick="answerExam(${i})" class="option-btn w-full text-left p-4 rounded-lg bg-surface/50 text-text text-sm flex items-center gap-3" data-idx="${i}">
+        <span class="w-7 h-7 rounded-full bg-cyan/20 text-cyan flex items-center justify-center text-xs font-semibold shrink-0">${String.fromCharCode(65+i)}</span>
+        <span>${opt}</span>
+      </button>`).join('')}
+    </div>
+  `;
+}
+
+function answerExam(idx) {
+  const q = examState.questions[examState.current];
+  const btns = document.querySelectorAll('.option-btn');
+  btns.forEach(b => b.classList.add('disabled'));
+  if (idx === q.correct) {
+    btns[idx].classList.add('correct');
+    examState.correct++;
+  } else {
+    btns[idx].classList.add('wrong');
+    btns[q.correct].classList.add('correct');
+  }
+  examState.answers.push(idx);
+  setTimeout(() => {
+    examState.current++;
+    if (examState.current >= examState.questions.length) {
+      finishExam();
+    } else {
+      renderExamRun();
+    }
+  }, 1000);
+}
+
+function finishExam() {
+  if (examState.timerInterval) clearInterval(examState.timerInterval);
+  const total = examState.questions.length;
+  const correct = examState.correct;
+  const timeUsed = Math.floor((Date.now() - examState.startTime) / 60000);
+  state.examHistory.unshift({ examId: examState.examId, correct, total, time: timeUsed, date: new Date().toISOString() });
+  state.totalCorrect += correct;
+  addActivity('exam', 'Ujian — ' + correct + '/' + total + ' benar');
+  saveState();
+  navigate('exam-result');
+}
+
+function renderExamResult() {
+  const total = examState.questions.length;
+  const correct = examState.correct;
+  const timeUsed = Math.floor((Date.now() - examState.startTime) / 60000);
+  document.getElementById('exam-result-score').textContent = correct + '/' + total;
+  document.getElementById('exam-result-percentage').textContent = Math.round((correct/total)*100) + '% benar';
+  document.getElementById('exam-result-time').textContent = 'Waktu: ' + timeUsed + ' menit';
+}
+
+function retryExam() {
+  startExam(examState.examId);
+}
+
+// ===================== FLASHCARDS =====================
+function renderFlashcards(filter = 'all') {
+  const grid = document.getElementById('flashcards-grid');
+  const cards = filter === 'all' ? flashcardsData : flashcardsData.filter(f => f.category === filter);
+  grid.innerHTML = cards.map(f => `
+    <div class="flip-card h-48 cursor-pointer group" onclick="this.classList.toggle('flipped')">
+      <div class="flip-card-inner relative w-full h-full">
+        <div class="flip-card-front glass rounded-xl p-5 flex flex-col items-center justify-center text-center absolute inset-0">
+          <div class="text-xs text-cyan mb-2 uppercase tracking-wider">${f.category === 'neuro' ? 'Neuroanatomi' : 'Histologi'}</div>
+          <p class="text-text font-medium">${f.front}</p>
+          <div class="mt-3 text-[10px] text-text-dim">Klik untuk membalik</div>
+        </div>
+        <div class="flip-card-back glass rounded-xl p-5 flex flex-col items-center justify-center text-center absolute inset-0 border-cyan/40">
+          <div class="text-xs text-success mb-2 uppercase tracking-wider">Jawaban</div>
+          <p class="text-text">${f.back}</p>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function filterFlashcards(cat) {
+  renderFlashcards(cat);
+  document.querySelectorAll('#flashcard-filters button').forEach(b => {
+    if (b.textContent.trim().toLowerCase() === (cat === 'all' ? 'semua' : cat === 'neuro' ? 'neuroanatomi' : 'histologi')) {
+      b.className = 'px-4 py-1.5 rounded-full text-sm border border-cyan/30 bg-cyan/20 text-text';
+    } else {
+      b.className = 'px-4 py-1.5 rounded-full text-sm border border-cyan/20 text-text-dim hover:bg-cyan/10 transition-colors';
+    }
+  });
+}
+
+// ===================== POMODORO =====================
+let pomodoroInterval = null;
+let pomodoroTime = 1500; // 25 min
+let pomodoroRunning = false;
+
+function startPomodoro() {
+  navigate('dashboard');
+  setTimeout(() => {
+    const display = document.getElementById('pomodoro-display');
+    if (display) display.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, 100);
+}
+
+function togglePomodoro() {
+  const btn = document.getElementById('pomodoro-btn');
+  if (pomodoroRunning) {
+    clearInterval(pomodoroInterval);
+    pomodoroRunning = false;
+    btn.textContent = 'Mulai';
+  } else {
+    pomodoroRunning = true;
+    btn.textContent = 'Jeda';
+    pomodoroInterval = setInterval(() => {
+      pomodoroTime--;
+      updatePomodoroDisplay();
+      if (pomodoroTime <= 0) {
+        clearInterval(pomodoroInterval);
+        pomodoroRunning = false;
+        btn.textContent = 'Mulai';
+        state.focusTime += 25;
+        addActivity('pomodoro', 'Pomodoro — 25 menit');
+        saveState();
+        alert('Sesi Pomodoro selesai!');
+        resetPomodoro();
+      }
+    }, 1000);
+  }
+}
+
+function resetPomodoro() {
+  clearInterval(pomodoroInterval);
+  pomodoroRunning = false;
+  pomodoroTime = 1500;
+  updatePomodoroDisplay();
+  const btn = document.getElementById('pomodoro-btn');
+  if (btn) btn.textContent = 'Mulai';
+}
+
+function updatePomodoroDisplay() {
+  const m = Math.floor(pomodoroTime / 60);
+  const s = pomodoroTime % 60;
+  const el = document.getElementById('pomodoro-display');
+  if (el) el.textContent = String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+}
+
+// ===================== SETTINGS & UTILS =====================
+function renderSettings() {
+  document.getElementById('settings-flashcount').textContent = flashcardsData.length;
+}
+
+function resetData() {
+  if (confirm('Yakin ingin menghapus semua data? Tindakan ini tidak bisa dibatalkan.')) {
+    localStorage.removeItem('medstudy-state');
+    state = getDefaultState();
+    saveState();
+    render();
+    alert('Data berhasil direset.');
+  }
+}
+
+function addActivity(type, description) {
+  const times = ['Baru saja', '1 menit lalu', '2 menit lalu', '5 menit lalu'];
+  const time = times[Math.floor(Math.random() * times.length)];
+  state.activities.unshift({ id: 'a' + Date.now(), type, description, time });
+  if (state.activities.length > 20) state.activities.pop();
+  saveState();
+}
+
+// ===================== INIT =====================
+document.addEventListener('DOMContentLoaded', () => {
+  render();
+});
+</script>
+</body>
+</html>
